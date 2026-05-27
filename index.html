@@ -1,0 +1,2574 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LiveurPro — Gestion Livraison</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c28;
+            --border: rgba(255,255,255,0.07);
+            --accent: #f0c040;
+            --accent2: #e07830;
+            --text: #f0ede8;
+            --text-dim: #8888a0;
+            --text-faint: #44445a;
+            --green: #30d090;
+            --red: #f05060;
+            --orange: #f09030;
+            --blue: #4090f0;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --sidebar-w: 240px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── LOGIN PAGE ─── */
+        .login-page {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg);
+        }
+
+        .login-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 100%; max-width: 400px;
+            animation: slideUp 0.35s cubic-bezier(.22,.68,0,1.2);
+        }
+
+        .login-logo {
+            display: flex; align-items: center; gap: 14px;
+            margin-bottom: 36px;
+        }
+
+        .login-logo-mark {
+            width: 48px; height: 48px;
+            background: var(--accent);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            color: #0a0a0f; font-size: 20px;
+        }
+
+        .login-logo-text {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800; font-size: 22px;
+            color: var(--text);
+        }
+
+        .login-logo-sub {
+            font-size: 11px; color: var(--text-dim);
+            letter-spacing: 2px; text-transform: uppercase;
+            display: block; margin-top: 2px;
+        }
+
+        .login-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px; font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .login-sub {
+            font-size: 13px; color: var(--text-dim);
+            margin-bottom: 28px;
+        }
+
+        .form-group { margin-bottom: 16px; }
+
+        .form-label {
+            display: block;
+            font-size: 11px; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-dim); margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%; height: 46px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0 16px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: rgba(240,192,64,0.4);
+            box-shadow: 0 0 0 3px rgba(240,192,64,0.08);
+        }
+
+        .form-input::placeholder { color: var(--text-faint); }
+
+        textarea.form-input {
+            height: auto; padding: 12px 16px;
+            resize: vertical; min-height: 80px;
+        }
+
+        select.form-input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            height: 46px; padding: 0 24px;
+            border-radius: 999px;
+            font-family: 'Syne', sans-serif;
+            font-size: 14px; font-weight: 700;
+            cursor: pointer; border: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent); color: #0a0a0f;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #ffd060;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(240,192,64,0.35);
+        }
+
+        .btn-secondary {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            border-color: rgba(240,192,64,0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: rgba(240,80,96,0.15);
+            border: 1px solid rgba(240,80,96,0.3);
+            color: var(--red);
+        }
+
+        .btn-danger:hover { background: rgba(240,80,96,0.25); }
+
+        .btn-sm { height: 34px; padding: 0 16px; font-size: 12px; }
+
+        .login-error {
+            background: rgba(240,80,96,0.1);
+            border: 1px solid rgba(240,80,96,0.3);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-size: 13px; color: var(--red);
+            margin-bottom: 16px; display: none;
+        }
+
+        /* ─── APP LAYOUT ─── */
+        .app { display: none; min-height: 100vh; }
+        .app.active { display: flex; }
+
+        /* ─── SIDEBAR ─── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            position: fixed; left: 0; top: 0; bottom: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-logo {
+            display: flex; align-items: center; gap: 12px;
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo-mark {
+            width: 36px; height: 36px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #0a0a0f; font-size: 14px; flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800; font-size: 16px; color: var(--text);
+        }
+
+        .logo-sub {
+            font-size: 9px; color: var(--text-dim);
+            letter-spacing: 2px; text-transform: uppercase;
+            display: block; margin-top: 1px;
+        }
+
+        .sidebar-user {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-info {
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .user-avatar {
+            width: 34px; height: 34px;
+            background: var(--surface2);
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-size: 13px; font-weight: 700;
+            color: var(--accent); flex-shrink: 0;
+        }
+
+        .user-name {
+            font-size: 14px; font-weight: 500; color: var(--text);
+        }
+
+        .user-role {
+            font-size: 10px; color: var(--text-dim);
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        .sidebar-nav {
+            flex: 1; padding: 12px 12px;
+            overflow-y: auto;
+        }
+
+        .nav-section-label {
+            font-size: 9px; font-weight: 600;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: var(--text-faint);
+            padding: 8px 8px 4px;
+            margin-top: 8px;
+        }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            color: var(--text-dim);
+            font-size: 14px; font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-bottom: 2px;
+            border: none; background: none;
+            width: 100%; text-align: left;
+        }
+
+        .nav-item i { width: 16px; text-align: center; font-size: 13px; }
+
+        .nav-item:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: rgba(240,192,64,0.12);
+            color: var(--accent);
+            border: 1px solid rgba(240,192,64,0.15);
+        }
+
+        .nav-item .nav-badge {
+            margin-left: auto;
+            background: var(--accent);
+            color: #0a0a0f;
+            font-size: 10px; font-weight: 700;
+            padding: 1px 7px; border-radius: 999px;
+            font-family: 'Syne', sans-serif;
+        }
+
+        .nav-item .nav-badge.red {
+            background: var(--red); color: #fff;
+        }
+
+        .sidebar-bottom {
+            padding: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-logout {
+            display: flex; align-items: center; gap: 10px;
+            width: 100%; padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            background: none; border: none;
+            color: var(--text-dim); font-size: 13px;
+            cursor: pointer; transition: all 0.15s;
+        }
+
+        .btn-logout:hover { background: rgba(240,80,96,0.1); color: var(--red); }
+
+        /* ─── MAIN CONTENT ─── */
+        .main-content {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            position: relative; z-index: 1;
+        }
+
+        /* ─── TOP BAR ─── */
+        .topbar {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(10,10,15,0.88);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 64px;
+            display: flex; align-items: center; gap: 16px;
+        }
+
+        .topbar-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 18px; font-weight: 700;
+            flex: 1;
+        }
+
+        .topbar-title span {
+            font-size: 13px; font-weight: 400;
+            color: var(--text-dim); display: block;
+        }
+
+        /* ─── PAGE CONTENT ─── */
+        .page { display: none; padding: 32px; }
+        .page.active { display: block; }
+
+        /* ─── STAT CARDS ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+
+        .stat-card.total::before { background: var(--accent); }
+        .stat-card.pending::before { background: var(--orange); }
+        .stat-card.encours::before { background: var(--blue); }
+        .stat-card.livree::before { background: var(--green); }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(240,192,64,0.2);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+        }
+
+        .stat-card-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card.total .stat-card-icon { background: rgba(240,192,64,0.12); color: var(--accent); }
+        .stat-card.pending .stat-card-icon { background: rgba(240,144,48,0.12); color: var(--orange); }
+        .stat-card.encours .stat-card-icon { background: rgba(64,144,240,0.12); color: var(--blue); }
+        .stat-card.livree .stat-card-icon { background: rgba(48,208,144,0.12); color: var(--green); }
+
+        .stat-card-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 36px; font-weight: 800;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat-card.total .stat-card-value { color: var(--accent); }
+        .stat-card.pending .stat-card-value { color: var(--orange); }
+        .stat-card.encours .stat-card-value { color: var(--blue); }
+        .stat-card.livree .stat-card-value { color: var(--green); }
+
+        .stat-card-label {
+            font-size: 12px; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 1px; font-weight: 500;
+        }
+
+        .stat-card-sub {
+            font-size: 11px; color: var(--text-faint);
+            margin-top: 4px;
+        }
+
+        /* ─── RECENT LIVRAISONS ─── */
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 16px; font-weight: 700;
+        }
+
+        .section-label-sm {
+            font-size: 10px; font-weight: 600;
+            letter-spacing: 2.5px; text-transform: uppercase;
+            color: var(--text-faint);
+        }
+
+        /* ─── TABLE ─── */
+        .table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%; border-collapse: collapse;
+        }
+
+        thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 10px; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-faint);
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+
+        tbody tr:hover { background: var(--surface2); }
+
+        tbody td {
+            padding: 14px 16px;
+            font-size: 14px; color: var(--text);
+            vertical-align: middle;
+        }
+
+        .td-dim { color: var(--text-dim); font-size: 13px; }
+
+        /* ─── STATUS BADGES ─── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 999px;
+            font-size: 11px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .badge-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+        }
+
+        .badge.pending { background: rgba(240,144,48,0.12); color: var(--orange); border: 1px solid rgba(240,144,48,0.2); }
+        .badge.pending .badge-dot { background: var(--orange); }
+
+        .badge.encours { background: rgba(64,144,240,0.12); color: var(--blue); border: 1px solid rgba(64,144,240,0.2); }
+        .badge.encours .badge-dot { background: var(--blue); animation: livePulse 1.5s ease-in-out infinite; }
+
+        .badge.livree { background: rgba(48,208,144,0.12); color: var(--green); border: 1px solid rgba(48,208,144,0.2); }
+        .badge.livree .badge-dot { background: var(--green); }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        /* ─── FORM CARD ─── */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            max-width: 720px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-grid .full { grid-column: 1 / -1; }
+
+        /* ─── SEARCH BAR ─── */
+        .search-bar {
+            display: flex; gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-wrap {
+            flex: 1; position: relative; min-width: 200px;
+        }
+
+        .search-wrap i {
+            position: absolute; left: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim); font-size: 13px;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%; height: 42px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0 16px 0 40px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-input::placeholder { color: var(--text-faint); }
+        .search-input:focus {
+            border-color: rgba(240,192,64,0.4);
+            box-shadow: 0 0 0 3px rgba(240,192,64,0.08);
+        }
+
+        .filter-select {
+            height: 42px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0 40px 0 16px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px; outline: none;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            transition: border-color 0.2s;
+        }
+
+        .filter-select:focus { border-color: rgba(240,192,64,0.4); }
+
+        /* ─── PRIX TABLE ─── */
+        .prix-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .prix-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex; align-items: center; gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .prix-card:hover {
+            border-color: rgba(240,192,64,0.2);
+            transform: translateY(-2px);
+        }
+
+        .prix-card-icon {
+            width: 36px; height: 36px;
+            background: var(--surface2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent); font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .prix-card-zone { flex: 1; min-width: 0; }
+
+        .prix-card-name {
+            font-size: 14px; font-weight: 500;
+            color: var(--text); white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .prix-card-quartier {
+            font-size: 11px; color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .prix-card-price {
+            font-family: 'Syne', sans-serif;
+            font-size: 16px; font-weight: 700;
+            color: var(--accent); flex-shrink: 0;
+        }
+
+        /* ─── CONFIG ─── */
+        .config-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .config-section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 14px; font-weight: 700;
+            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+            color: var(--text);
+        }
+
+        .config-section-title i { color: var(--accent); }
+
+        /* ─── USERS ─── */
+        .user-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+
+        .user-card:hover { border-color: rgba(240,192,64,0.2); }
+
+        .user-card-avatar {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-size: 15px; font-weight: 700;
+            color: var(--accent); flex-shrink: 0;
+        }
+
+        .user-card-info { flex: 1; }
+
+        .user-card-name {
+            font-size: 15px; font-weight: 500; color: var(--text);
+        }
+
+        .user-card-meta {
+            font-size: 12px; color: var(--text-dim); margin-top: 2px;
+        }
+
+        .role-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 999px;
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .role-badge.admin { background: rgba(240,192,64,0.15); color: var(--accent); border: 1px solid rgba(240,192,64,0.2); }
+        .role-badge.livreur { background: rgba(64,144,240,0.12); color: var(--blue); border: 1px solid rgba(64,144,240,0.2); }
+
+        /* ─── MODAL ─── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%; max-width: 520px;
+            padding: 32px;
+            animation: slideUp 0.25s cubic-bezier(.22,.68,0,1.2);
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        .modal-box.wide { max-width: 640px; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px; font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px; height: 32px;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 50%; color: var(--text);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover { background: var(--surface); }
+
+        .modal-footer {
+            display: flex; gap: 12px;
+            margin-top: 24px; justify-content: flex-end;
+        }
+
+        /* ─── TOAST ─── */
+        .toast {
+            position: fixed; bottom: 32px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--surface);
+            border: 1px solid rgba(240,192,64,0.3);
+            border-radius: 999px;
+            padding: 10px 20px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13px; color: var(--text);
+            z-index: 2000; opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            pointer-events: none; white-space: nowrap;
+        }
+
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast i { color: var(--accent); }
+        .toast.error { border-color: rgba(240,80,96,0.3); }
+        .toast.error i { color: var(--red); }
+        .toast.success { border-color: rgba(48,208,144,0.3); }
+        .toast.success i { color: var(--green); }
+
+        /* ─── TICKET PRINT ─── */
+        @media print {
+            body > * { display: none !important; }
+            #ticketPrint { display: block !important; }
+        }
+
+        #ticketPrint {
+            display: none;
+            width: 80mm;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #000;
+            background: #fff;
+            padding: 4mm;
+        }
+
+        .ticket-header { text-align: center; margin-bottom: 6px; }
+        .ticket-logo { font-size: 16px; font-weight: bold; letter-spacing: 2px; }
+        .ticket-sub { font-size: 9px; letter-spacing: 1px; }
+        .ticket-divider { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+        .ticket-row { display: flex; justify-content: space-between; margin: 3px 0; }
+        .ticket-label { color: #555; }
+        .ticket-value { font-weight: bold; text-align: right; flex: 1; margin-left: 8px; word-break: break-word; }
+        .ticket-status { text-align: center; margin: 6px 0; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .ticket-footer { text-align: center; font-size: 9px; color: #555; margin-top: 6px; }
+        .ticket-barcode { text-align: center; font-size: 10px; letter-spacing: 4px; margin: 4px 0; }
+
+        /* ─── EMPTY STATE ─── */
+        .empty-state {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 16px; padding: 60px 20px;
+            color: var(--text-faint);
+        }
+
+        .empty-state i { font-size: 48px; opacity: 0.4; }
+        .empty-state p { font-family: 'Syne', sans-serif; font-size: 16px; color: var(--text-dim); }
+        .empty-state small { font-size: 13px; }
+
+        /* ─── SPINNER ─── */
+        .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-wrap { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: var(--text-dim); }
+
+        /* ─── HEADER MOBILE TOGGLE ─── */
+        .sidebar-toggle {
+            display: none;
+            background: none; border: none;
+            color: var(--text); font-size: 20px;
+            cursor: pointer; padding: 4px;
+        }
+
+        .sidebar-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); z-index: 99;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .prix-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open { transform: translateX(0); }
+
+            .sidebar-overlay.open { display: block; }
+
+            .sidebar-toggle { display: block; }
+
+            .main-content { margin-left: 0; }
+
+            .topbar { padding: 0 16px; }
+
+            .page { padding: 16px; }
+
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+            .form-grid { grid-template-columns: 1fr; }
+            .form-grid .full { grid-column: 1; }
+
+            .prix-grid { grid-template-columns: 1fr; }
+
+            .table-wrap { overflow-x: auto; }
+
+            table { min-width: 600px; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+        /* Detail row in modal */
+        .detail-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; margin-bottom: 20px;
+        }
+
+        .detail-tile {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+        }
+
+        .tile-label {
+            font-size: 9px; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-faint); margin-bottom: 4px;
+        }
+
+        .tile-val {
+            font-family: 'Syne', sans-serif;
+            font-size: 15px; font-weight: 700; color: var(--text);
+        }
+
+        .tile-val.accent { color: var(--accent); }
+        .tile-val.green { color: var(--green); }
+        .tile-val.orange { color: var(--orange); }
+        .tile-val.blue { color: var(--blue); }
+        .tile-val.red { color: var(--red); }
+
+        .stat-card-badge {
+            position: absolute; top: 16px; right: 16px;
+            font-size: 10px; color: var(--text-faint);
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN PAGE ═══════════════ -->
+<div class="login-page" id="loginPage">
+    <div class="login-box">
+        <div class="login-logo">
+            <div class="login-logo-mark"><i class="fas fa-truck-fast"></i></div>
+            <div>
+                <div class="login-logo-text">LiveurPro</div>
+                <span class="login-logo-sub">Gestion Livraison</span>
+            </div>
+        </div>
+        <div class="login-title">Connexion</div>
+        <div class="login-sub">Accédez à votre espace de gestion</div>
+        <div class="login-error" id="loginError"><i class="fas fa-exclamation-circle"></i> <span id="loginErrorMsg"></span></div>
+        <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="loginEmail" placeholder="votre@email.com">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Mot de passe</label>
+            <input type="password" class="form-input" id="loginPassword" placeholder="••••••••">
+        </div>
+        <button class="btn btn-primary" id="btnLogin" onclick="doLogin()">
+            <i class="fas fa-sign-in-alt"></i> Se connecter
+        </button>
+    </div>
+</div>
+
+<!-- ═══════════════ APP ═══════════════ -->
+<div class="app" id="app">
+
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ─── SIDEBAR ─── -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-mark"><i class="fas fa-truck-fast"></i></div>
+            <div>
+                <div class="logo-text">LiveurPro</div>
+                <span class="logo-sub">Gestion Livraison</span>
+            </div>
+        </div>
+
+        <div class="sidebar-user">
+            <div class="user-info">
+                <div class="user-avatar" id="sidebarAvatar">—</div>
+                <div>
+                    <div class="user-name" id="sidebarName">—</div>
+                    <div class="user-role" id="sidebarRole">—</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav" id="sidebarNav">
+            <!-- nav items rendered by JS -->
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button class="btn-logout" onclick="doLogout()">
+                <i class="fas fa-sign-out-alt"></i> Déconnexion
+            </button>
+        </div>
+    </aside>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="topbar-title" id="topbarTitle">
+                Dashboard
+                <span id="topbarSub">Bienvenue</span>
+            </div>
+            <div id="topbarActions"></div>
+        </div>
+
+        <!-- ═══ PAGE: DASHBOARD ═══ -->
+        <div class="page active" id="page-dashboard">
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card total" onclick="navigateTo('historique')">
+                    <div class="stat-card-badge">AUJOURD'HUI</div>
+                    <div class="stat-card-icon"><i class="fas fa-boxes"></i></div>
+                    <div class="stat-card-value" id="statTotal">—</div>
+                    <div class="stat-card-label">Total livraisons</div>
+                    <div class="stat-card-sub" id="statTotalSub">aujourd'hui</div>
+                </div>
+                <div class="stat-card pending" onclick="navigateTo('historique', 'pending')">
+                    <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
+                    <div class="stat-card-value" id="statPending">—</div>
+                    <div class="stat-card-label">En attente</div>
+                    <div class="stat-card-sub">à affecter</div>
+                </div>
+                <div class="stat-card encours" onclick="navigateTo('historique', 'encours')">
+                    <div class="stat-card-icon"><i class="fas fa-truck"></i></div>
+                    <div class="stat-card-value" id="statEncours">—</div>
+                    <div class="stat-card-label">En cours</div>
+                    <div class="stat-card-sub">en livraison</div>
+                </div>
+                <div class="stat-card livree" onclick="navigateTo('historique', 'livree')">
+                    <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-card-value" id="statLivree">—</div>
+                    <div class="stat-card-label">Livrées</div>
+                    <div class="stat-card-sub">aujourd'hui</div>
+                </div>
+            </div>
+
+            <!-- Livraisons en cours -->
+            <div class="section-header">
+                <div>
+                    <div class="section-label-sm">Tableau de bord</div>
+                    <div class="section-title">Livraisons en cours</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="navigateTo('nouvelle')">
+                    <i class="fas fa-plus"></i> Nouvelle
+                </button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Livreur</th>
+                            <th>Client / Adresse</th>
+                            <th>Article</th>
+                            <th>Heure</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboardTable">
+                        <tr><td colspan="7"><div class="loading-wrap"><div class="spinner"></div> Chargement…</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ PAGE: NOUVELLE LIVRAISON ═══ -->
+        <div class="page" id="page-nouvelle">
+            <div class="form-card">
+                <div class="form-grid">
+                    <div>
+                        <label class="form-label">Livreur *</label>
+                        <select class="form-input" id="newLivreur">
+                            <option value="">Sélectionner un livreur…</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Zone / Quartier *</label>
+                        <select class="form-input" id="newZone" onchange="updatePrix()">
+                            <option value="">Sélectionner la zone…</option>
+                        </select>
+                    </div>
+                    <div class="full">
+                        <label class="form-label">Adresse de livraison *</label>
+                        <input type="text" class="form-input" id="newAdresse" placeholder="Ex : Lot II D 45, Analamahitsy…">
+                    </div>
+                    <div>
+                        <label class="form-label">Nom du client *</label>
+                        <input type="text" class="form-input" id="newClient" placeholder="Nom du client">
+                    </div>
+                    <div>
+                        <label class="form-label">Téléphone client</label>
+                        <input type="tel" class="form-input" id="newTel" placeholder="+261 34 …">
+                    </div>
+                    <div class="full">
+                        <label class="form-label">Article(s) à livrer *</label>
+                        <input type="text" class="form-input" id="newArticle" placeholder="Ex : Téléphone Samsung, Colis, etc.">
+                    </div>
+                    <div>
+                        <label class="form-label">Date de livraison *</label>
+                        <input type="date" class="form-input" id="newDate">
+                    </div>
+                    <div>
+                        <label class="form-label">Heure prévue</label>
+                        <input type="time" class="form-input" id="newHeure">
+                    </div>
+                    <div>
+                        <label class="form-label">Prix livraison (Ar)</label>
+                        <input type="number" class="form-input" id="newPrix" placeholder="Auto selon zone" readonly style="background:var(--surface2);cursor:default;">
+                    </div>
+                    <div>
+                        <label class="form-label">Statut initial</label>
+                        <select class="form-input" id="newStatut">
+                            <option value="pending">En attente</option>
+                            <option value="encours">En cours</option>
+                        </select>
+                    </div>
+                    <div class="full">
+                        <label class="form-label">Remarque</label>
+                        <textarea class="form-input" id="newRemarque" rows="3" placeholder="Instructions spéciales, notes…"></textarea>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;">
+                    <button class="btn btn-primary" onclick="createLivraison()">
+                        <i class="fas fa-plus"></i> Créer la livraison
+                    </button>
+                    <button class="btn btn-secondary" onclick="navigateTo('dashboard')">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PAGE: LISTE PRIX ═══ -->
+        <div class="page" id="page-prix">
+            <div class="section-header" style="margin-bottom:20px;">
+                <div>
+                    <div class="section-label-sm">Tarification</div>
+                    <div class="section-title">Tarifs de livraison</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="openPrixModal()" id="btnAddPrix">
+                    <i class="fas fa-plus"></i> Ajouter une zone
+                </button>
+            </div>
+
+            <div class="search-bar">
+                <div class="search-wrap">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="search-input" id="prixSearch" placeholder="Rechercher une zone…" oninput="filterPrix()">
+                </div>
+            </div>
+
+            <div class="prix-grid" id="prixGrid">
+                <div class="loading-wrap" style="grid-column:1/-1;"><div class="spinner"></div> Chargement…</div>
+            </div>
+        </div>
+
+        <!-- ═══ PAGE: HISTORIQUE ═══ -->
+        <div class="page" id="page-historique">
+            <div class="section-header" style="margin-bottom:16px;">
+                <div>
+                    <div class="section-label-sm">Historique</div>
+                    <div class="section-title">Toutes les livraisons</div>
+                </div>
+            </div>
+
+            <div class="search-bar">
+                <div class="search-wrap">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="search-input" id="histSearch" placeholder="Livreur, client, article…" oninput="filterHistorique()">
+                </div>
+                <select class="filter-select" id="histStatut" onchange="filterHistorique()">
+                    <option value="">Tous les statuts</option>
+                    <option value="pending">En attente</option>
+                    <option value="encours">En cours</option>
+                    <option value="livree">Livrée</option>
+                </select>
+                <select class="filter-select" id="histLivreur" onchange="filterHistorique()">
+                    <option value="">Tous les livreurs</option>
+                </select>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Date</th>
+                            <th>Livreur</th>
+                            <th>Client</th>
+                            <th>Article</th>
+                            <th>Zone</th>
+                            <th>Prix</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="histTable">
+                        <tr><td colspan="9"><div class="loading-wrap"><div class="spinner"></div> Chargement…</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ PAGE: CONFIGURATION ═══ -->
+        <div class="page" id="page-config">
+            <div class="config-section">
+                <div class="config-section-title">
+                    <i class="fas fa-building"></i> Informations de l'entreprise
+                </div>
+                <div class="form-grid">
+                    <div>
+                        <label class="form-label">Nom de l'entreprise</label>
+                        <input type="text" class="form-input" id="cfgNom" placeholder="Ex : Rapid Livraison Mada">
+                    </div>
+                    <div>
+                        <label class="form-label">Slogan / Sous-titre</label>
+                        <input type="text" class="form-input" id="cfgSlogan" placeholder="Ex : Livraison rapide Antananarivo">
+                    </div>
+                    <div>
+                        <label class="form-label">Téléphone</label>
+                        <input type="text" class="form-input" id="cfgTel" placeholder="+261 34 …">
+                    </div>
+                    <div>
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="cfgEmail" placeholder="contact@example.com">
+                    </div>
+                    <div class="full">
+                        <label class="form-label">Adresse / Boutique (point de départ)</label>
+                        <input type="text" class="form-input" id="cfgAdresse" placeholder="Ex : Antanimena, Antananarivo 101">
+                    </div>
+                    <div class="full">
+                        <label class="form-label">Pied de page ticket (Bon de livraison)</label>
+                        <textarea class="form-input" id="cfgFooter" rows="3" placeholder="Ex : Merci de votre confiance ! — contact : +261 34 00 000 00"></textarea>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div>
+                        <label class="form-label">Mention en-tête ticket (ligne 2)</label>
+                        <input type="text" class="form-input" id="cfgMention" placeholder="Ex : Bon de livraison">
+                    </div>
+                    <div>
+                        <label class="form-label">Politique remboursement (sur ticket)</label>
+                        <input type="text" class="form-input" id="cfgPolicy" placeholder="Ex : Non remboursable après livraison">
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="max-width:200px;" onclick="saveConfig()">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+
+            <div class="config-section">
+                <div class="config-section-title">
+                    <i class="fas fa-ticket"></i> Aperçu ticket 80mm
+                </div>
+                <div style="background:#fff;padding:12px;border-radius:8px;display:inline-block;min-width:300px;">
+                    <div id="ticketPreview" style="width:80mm;font-family:'Courier New',monospace;font-size:11px;color:#000;padding:4mm;">
+                        <!-- preview rendered by JS -->
+                    </div>
+                </div>
+                <div style="margin-top:16px;">
+                    <button class="btn btn-secondary btn-sm" onclick="printTicketPreview()">
+                        <i class="fas fa-print"></i> Imprimer aperçu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PAGE: UTILISATEURS ═══ -->
+        <div class="page" id="page-users">
+            <div class="section-header" style="margin-bottom:20px;">
+                <div>
+                    <div class="section-label-sm">Administration</div>
+                    <div class="section-title">Utilisateurs</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="openUserModal()">
+                    <i class="fas fa-user-plus"></i> Ajouter
+                </button>
+            </div>
+            <div id="usersList">
+                <div class="loading-wrap"><div class="spinner"></div> Chargement…</div>
+            </div>
+        </div>
+
+        <!-- ═══ PAGE: MES LIVRAISONS (livreur) ═══ -->
+        <div class="page" id="page-mes-livraisons">
+            <div class="section-header" style="margin-bottom:16px;">
+                <div>
+                    <div class="section-label-sm">Mon espace</div>
+                    <div class="section-title">Mes livraisons</div>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Date</th>
+                            <th>Client</th>
+                            <th>Adresse</th>
+                            <th>Article</th>
+                            <th>Prix</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mesLivraisonsTable">
+                        <tr><td colspan="8"><div class="loading-wrap"><div class="spinner"></div> Chargement…</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /main-content -->
+</div><!-- /app -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modalDetail" onclick="closeModal('modalDetail', event)">
+    <div class="modal-box wide">
+        <div class="modal-header">
+            <div class="modal-title" id="modalDetailTitle">Détail livraison</div>
+            <button class="modal-close" onclick="closeModalById('modalDetail')"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="modalDetailContent"></div>
+        <div class="modal-footer" id="modalDetailFooter"></div>
+    </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="modalUser" onclick="closeModal('modalUser', event)">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title" id="modalUserTitle">Nouvel utilisateur</div>
+            <button class="modal-close" onclick="closeModalById('modalUser')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Nom complet *</label>
+            <input type="text" class="form-input" id="uNom" placeholder="Prénom Nom">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" class="form-input" id="uEmail" placeholder="email@exemple.com">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Mot de passe *</label>
+            <input type="password" class="form-input" id="uPassword" placeholder="Minimum 8 caractères">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Rôle *</label>
+            <select class="form-input" id="uRole">
+                <option value="livreur">Livreur</option>
+                <option value="admin">Admin / Coordinateur</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModalById('modalUser')">Annuler</button>
+            <button class="btn btn-primary" onclick="saveUser()" style="max-width:160px;">
+                <i class="fas fa-save"></i> Enregistrer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Prix Modal -->
+<div class="modal-overlay" id="modalPrix" onclick="closeModal('modalPrix', event)">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title" id="modalPrixTitle">Nouvelle zone</div>
+            <button class="modal-close" onclick="closeModalById('modalPrix')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Nom de la zone / quartier *</label>
+            <input type="text" class="form-input" id="pZone" placeholder="Ex : Ivandry, Ambatobe…">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Commune / Secteur</label>
+            <input type="text" class="form-input" id="pSecteur" placeholder="Ex : Commune Urbaine Antananarivo">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Prix standard (Ar) *</label>
+            <input type="number" class="form-input" id="pPrix" placeholder="Ex : 5000">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Distance approximative (km)</label>
+            <input type="number" class="form-input" id="pDistance" placeholder="Ex : 8">
+        </div>
+        <input type="hidden" id="pEditId">
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModalById('modalPrix')">Annuler</button>
+            <button class="btn btn-primary" onclick="savePrix()" style="max-width:160px;">
+                <i class="fas fa-save"></i> Enregistrer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Ticket Print div -->
+<div id="ticketPrint"></div>
+
+<!-- Toast -->
+<div class="toast" id="globalToast">
+    <i class="fas fa-check-circle" id="toastIcon"></i>
+    <span id="toastMsg">—</span>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   SUPABASE CONFIG
+   !! Remplacer par vos vraies clés Supabase !!
+═══════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://VOTRE_PROJECT.supabase.co';
+const SUPABASE_KEY = 'VOTRE_ANON_KEY';
+
+const headers = () => ({
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + (currentSession?.access_token || SUPABASE_KEY)
+});
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let currentUser = null;
+let currentSession = null;
+let allLivraisons = [];
+let allUsers = [];
+let allPrix = [];
+let appConfig = {};
+let editPrixId = null;
+let editUserId = null;
+
+/* ═══════════════════════════════════════════════════════
+   SUPABASE AUTH
+═══════════════════════════════════════════════════════ */
+async function supabaseSignIn(email, password) {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+        body: JSON.stringify({ email, password })
+    });
+    return r.json();
+}
+
+async function supabaseSignOut() {
+    await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+        method: 'POST',
+        headers: headers()
+    });
+}
+
+async function supabaseGetUser(token) {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + token }
+    });
+    return r.json();
+}
+
+/* ═══════════════════════════════════════════════════════
+   SUPABASE DB
+═══════════════════════════════════════════════════════ */
+async function dbGet(table, params = '') {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, { headers: headers() });
+    return r.json();
+}
+
+async function dbPost(table, data) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+        method: 'POST',
+        headers: { ...headers(), 'Prefer': 'return=representation' },
+        body: JSON.stringify(data)
+    });
+    return r.json();
+}
+
+async function dbPatch(table, id, data) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { ...headers(), 'Prefer': 'return=representation' },
+        body: JSON.stringify(data)
+    });
+    return r.json();
+}
+
+async function dbDelete(table, id) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: headers()
+    });
+    return r.ok;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LOGIN / LOGOUT
+═══════════════════════════════════════════════════════ */
+async function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('btnLogin');
+
+    if (!email || !password) { showLoginError('Veuillez remplir tous les champs.'); return; }
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion…';
+    btn.disabled = true;
+
+    try {
+        const res = await supabaseSignIn(email, password);
+
+        if (res.error || !res.access_token) {
+            showLoginError(res.error?.message || 'Identifiants incorrects.');
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Se connecter';
+            btn.disabled = false;
+            return;
+        }
+
+        currentSession = res;
+
+        // Get user profile from profiles table
+        const profiles = await dbGet('profiles', `email=eq.${encodeURIComponent(email)}&select=*`);
+        if (!profiles || profiles.length === 0) {
+            showLoginError('Profil utilisateur introuvable. Contactez l\'administrateur.');
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Se connecter';
+            btn.disabled = false;
+            return;
+        }
+
+        currentUser = { ...res.user, ...profiles[0] };
+        localStorage.setItem('sb_session', JSON.stringify(res));
+        localStorage.setItem('sb_user', JSON.stringify(currentUser));
+
+        bootApp();
+    } catch (e) {
+        // Demo mode if Supabase not configured
+        if (SUPABASE_URL.includes('VOTRE_PROJECT')) {
+            demoLogin(email, password);
+        } else {
+            showLoginError('Erreur de connexion. Vérifiez votre connexion internet.');
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Se connecter';
+            btn.disabled = false;
+        }
+    }
+}
+
+// Demo mode (when Supabase not yet configured)
+function demoLogin(email, password) {
+    const demoUsers = [
+        { id: 'admin-1', email: 'admin@demo.mg', password: 'admin123', nom: 'Admin Coordinateur', role: 'admin' },
+        { id: 'liv-1', email: 'livreur@demo.mg', password: 'liv123', nom: 'Jean Rakoto', role: 'livreur' },
+    ];
+    const u = demoUsers.find(x => x.email === email && x.password === password);
+    if (!u) {
+        showLoginError('Identifiants incorrects. Essayez admin@demo.mg / admin123');
+        document.getElementById('btnLogin').innerHTML = '<i class="fas fa-sign-in-alt"></i> Se connecter';
+        document.getElementById('btnLogin').disabled = false;
+        return;
+    }
+    currentUser = u;
+    currentSession = { access_token: 'demo', user: u };
+    bootApp();
+}
+
+function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    document.getElementById('loginErrorMsg').textContent = msg;
+    el.style.display = 'flex';
+}
+
+async function doLogout() {
+    if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        await supabaseSignOut();
+    }
+    currentUser = null; currentSession = null;
+    allLivraisons = []; allUsers = []; allPrix = [];
+    localStorage.removeItem('sb_session');
+    localStorage.removeItem('sb_user');
+    document.getElementById('app').classList.remove('active');
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('btnLogin').innerHTML = '<i class="fas fa-sign-in-alt"></i> Se connecter';
+    document.getElementById('btnLogin').disabled = false;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BOOT APP
+═══════════════════════════════════════════════════════ */
+function bootApp() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+
+    const u = currentUser;
+    document.getElementById('sidebarAvatar').textContent = (u.nom || u.email).charAt(0).toUpperCase();
+    document.getElementById('sidebarName').textContent = u.nom || u.email;
+    document.getElementById('sidebarRole').textContent = u.role === 'admin' ? 'Coordinateur / Admin' : 'Livreur';
+
+    renderNav();
+    loadData();
+}
+
+function renderNav() {
+    const isAdmin = currentUser.role === 'admin';
+    const nav = document.getElementById('sidebarNav');
+
+    const adminItems = [
+        { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
+        { id: 'nouvelle', icon: 'fa-plus-circle', label: 'Nouvelle livraison' },
+        { id: 'historique', icon: 'fa-history', label: 'Historique' },
+        { id: 'prix', icon: 'fa-tags', label: 'Liste des prix' },
+        { id: 'config', icon: 'fa-cog', label: 'Configuration' },
+        { id: 'users', icon: 'fa-users', label: 'Utilisateurs' },
+    ];
+
+    const livreurItems = [
+        { id: 'mes-livraisons', icon: 'fa-truck', label: 'Mes livraisons' },
+    ];
+
+    const items = isAdmin ? adminItems : livreurItems;
+
+    nav.innerHTML = items.map(item => `
+        <button class="nav-item ${item.id === 'dashboard' || (item.id === 'mes-livraisons' && !isAdmin) ? 'active' : ''}"
+                id="nav-${item.id}"
+                onclick="navigateTo('${item.id}')">
+            <i class="fas ${item.icon}"></i>
+            ${item.label}
+            ${item.id === 'dashboard' ? '<span class="nav-badge" id="navBadgeEncours" style="display:none">0</span>' : ''}
+        </button>
+    `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════ */
+const pageTitles = {
+    'dashboard': ['Dashboard', 'Vue d\'ensemble des livraisons'],
+    'nouvelle': ['Nouvelle livraison', 'Créer une nouvelle livraison'],
+    'historique': ['Historique', 'Toutes les livraisons'],
+    'prix': ['Liste des prix', 'Tarification par zone — départ Antanimena'],
+    'config': ['Configuration', 'Paramètres de l\'entreprise'],
+    'users': ['Utilisateurs', 'Gestion des comptes'],
+    'mes-livraisons': ['Mes livraisons', 'Livraisons qui me sont assignées'],
+};
+
+function navigateTo(pageId, filter = null) {
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    const page = document.getElementById(`page-${pageId}`);
+    if (!page) return;
+    page.classList.add('active');
+
+    const navItem = document.getElementById(`nav-${pageId}`);
+    if (navItem) navItem.classList.add('active');
+
+    const titles = pageTitles[pageId] || [pageId, ''];
+    document.getElementById('topbarTitle').innerHTML = titles[0] + `<span>${titles[1]}</span>`;
+
+    closeSidebar();
+
+    // Page-specific init
+    if (pageId === 'dashboard') renderDashboard();
+    if (pageId === 'historique') {
+        if (filter) document.getElementById('histStatut').value = filter;
+        renderHistorique();
+    }
+    if (pageId === 'prix') renderPrix();
+    if (pageId === 'nouvelle') initNouvellePage();
+    if (pageId === 'config') renderConfig();
+    if (pageId === 'users') renderUsers();
+    if (pageId === 'mes-livraisons') renderMesLivraisons();
+}
+
+/* ═══════════════════════════════════════════════════════
+   LOAD DATA
+═══════════════════════════════════════════════════════ */
+async function loadData() {
+    await Promise.all([
+        loadLivraisons(),
+        loadPrix(),
+        loadUsers(),
+        loadConfig()
+    ]);
+
+    if (currentUser.role === 'admin') {
+        renderDashboard();
+    } else {
+        navigateTo('mes-livraisons');
+    }
+}
+
+async function loadLivraisons() {
+    if (SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        allLivraisons = getDemoLivraisons();
+        return;
+    }
+    try {
+        allLivraisons = await dbGet('livraisons', 'select=*&order=created_at.desc');
+        if (!Array.isArray(allLivraisons)) allLivraisons = [];
+    } catch { allLivraisons = getDemoLivraisons(); }
+}
+
+async function loadPrix() {
+    if (SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        allPrix = getDefaultPrix();
+        return;
+    }
+    try {
+        allPrix = await dbGet('zones_prix', 'select=*&order=zone.asc');
+        if (!Array.isArray(allPrix) || allPrix.length === 0) allPrix = getDefaultPrix();
+    } catch { allPrix = getDefaultPrix(); }
+}
+
+async function loadUsers() {
+    if (SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        allUsers = getDemoUsers();
+        return;
+    }
+    try {
+        allUsers = await dbGet('profiles', 'select=*&order=nom.asc');
+        if (!Array.isArray(allUsers)) allUsers = [];
+    } catch { allUsers = getDemoUsers(); }
+}
+
+async function loadConfig() {
+    if (SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        appConfig = getDemoConfig();
+        return;
+    }
+    try {
+        const rows = await dbGet('config', 'select=*&limit=1');
+        if (Array.isArray(rows) && rows.length > 0) appConfig = rows[0];
+        else appConfig = getDemoConfig();
+    } catch { appConfig = getDemoConfig(); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   DEMO DATA
+═══════════════════════════════════════════════════════ */
+function getDemoLivraisons() {
+    const today = new Date().toISOString().split('T')[0];
+    return [
+        { id: 'liv-001', numero: 'LIV-001', livreur_nom: 'Jean Rakoto', client_nom: 'Marie Rasoa', adresse: 'Lot II D 45, Analamahitsy', article: 'Téléphone Samsung A54', zone: 'Analamahitsy', prix: 5000, statut: 'encours', date: today, heure: '10:30', remarque: 'Appeler avant livraison', created_at: new Date().toISOString() },
+        { id: 'liv-002', numero: 'LIV-002', livreur_nom: 'Paul Raveloson', client_nom: 'Hery Andria', adresse: 'Cité Ambohibao', article: 'Colis électronique', zone: 'Ambohibao', prix: 6000, statut: 'pending', date: today, heure: '14:00', remarque: '', created_at: new Date().toISOString() },
+        { id: 'liv-003', numero: 'LIV-003', livreur_nom: 'Jean Rakoto', client_nom: 'Fidy Ratsima', adresse: 'Ivandry Résidentiel', article: 'Sac à dos + accessoires', zone: 'Ivandry', prix: 7000, statut: 'livree', date: today, heure: '09:00', remarque: 'Livré avec succès', created_at: new Date().toISOString() },
+        { id: 'liv-004', numero: 'LIV-004', livreur_nom: 'Paul Raveloson', client_nom: 'Soa Nirina', adresse: 'Antehiroka Bis', article: 'Vêtements x3', zone: 'Antehiroka', prix: 8000, statut: 'livree', date: today, heure: '11:30', remarque: '', created_at: new Date().toISOString() },
+    ];
+}
+
+function getDemoUsers() {
+    return [
+        { id: 'admin-1', nom: 'Admin Coordinateur', email: 'admin@demo.mg', role: 'admin' },
+        { id: 'liv-1', nom: 'Jean Rakoto', email: 'livreur@demo.mg', role: 'livreur' },
+        { id: 'liv-2', nom: 'Paul Raveloson', email: 'paul@demo.mg', role: 'livreur' },
+    ];
+}
+
+function getDemoConfig() {
+    return {
+        nom: 'Rapid Livraison Mada',
+        slogan: 'Livraison rapide — Antananarivo',
+        tel: '+261 34 00 000 00',
+        email: 'contact@rapidlivraison.mg',
+        adresse: 'Antanimena, Antananarivo 101',
+        footer: 'Merci de votre confiance !\nTél : +261 34 00 000 00',
+        mention: 'BON DE LIVRAISON',
+        policy: 'Non remboursable après livraison'
+    };
+}
+
+function getDefaultPrix() {
+    return [
+        // Proches Antanimena (< 3km) — 3 000 Ar
+        { id: 'z1', zone: 'Analakely', secteur: 'CUA Centre', prix: 3000, distance: 1 },
+        { id: 'z2', zone: 'Antaninarenina', secteur: 'CUA Centre', prix: 3000, distance: 1 },
+        { id: 'z3', zone: 'Isoraka', secteur: 'CUA Centre', prix: 3000, distance: 2 },
+        { id: 'z4', zone: 'Tsaralalàna', secteur: 'CUA Centre', prix: 3000, distance: 2 },
+        { id: 'z5', zone: 'Ambatonakanga', secteur: 'CUA Ouest', prix: 3500, distance: 2 },
+        { id: 'z6', zone: 'Isotry', secteur: 'CUA Ouest', prix: 3500, distance: 3 },
+        { id: 'z7', zone: 'Ambohijatovo', secteur: 'CUA Centre', prix: 3000, distance: 2 },
+        { id: 'z8', zone: 'Ambalavao Isotry', secteur: 'CUA Ouest', prix: 4000, distance: 3 },
+        // Moyens (3–6km) — 4 000–6 000 Ar
+        { id: 'z9', zone: 'Faravohitra', secteur: 'CUA Est', prix: 4000, distance: 4 },
+        { id: 'z10', zone: 'Ambohimanarina', secteur: 'CUA Ouest', prix: 4000, distance: 4 },
+        { id: 'z11', zone: 'Ambodivona', secteur: 'CUA Nord', prix: 4500, distance: 5 },
+        { id: 'z12', zone: 'Ankorondrano', secteur: 'CUA Nord', prix: 4500, distance: 5 },
+        { id: 'z13', zone: 'Andravoahangy', secteur: 'CUA Est', prix: 4500, distance: 5 },
+        { id: 'z14', zone: 'Mahamasina', secteur: 'CUA Centre', prix: 4000, distance: 3 },
+        { id: 'z15', zone: 'Behoririka', secteur: 'CUA Centre', prix: 4000, distance: 4 },
+        { id: 'z16', zone: 'Ankadifotsy', secteur: 'CUA Est', prix: 4500, distance: 5 },
+        { id: 'z17', zone: 'Morarano', secteur: 'CUA Est', prix: 5000, distance: 6 },
+        { id: 'z18', zone: 'Tsiadana', secteur: 'CUA Centre', prix: 4000, distance: 3 },
+        { id: 'z19', zone: 'Ampasapito', secteur: 'CUA Est', prix: 5000, distance: 6 },
+        // Plus éloignés (6–10km) — 5 000–7 000 Ar
+        { id: 'z20', zone: 'Analamahitsy', secteur: 'CUA Nord', prix: 5000, distance: 6 },
+        { id: 'z21', zone: 'Ambatobe', secteur: 'CUA Nord', prix: 5500, distance: 7 },
+        { id: 'z22', zone: 'Ivandry', secteur: 'CUA Nord', prix: 6000, distance: 8 },
+        { id: 'z23', zone: 'Ambohijanaka', secteur: 'CUA Nord-Est', prix: 6000, distance: 8 },
+        { id: 'z24', zone: 'Ambohibao', secteur: 'Banlieue Nord', prix: 6000, distance: 9 },
+        { id: 'z25', zone: 'Sabotsy Namehana', secteur: 'Banlieue Nord', prix: 5000, distance: 8 },
+        { id: 'z26', zone: 'Antehiroka', secteur: 'Banlieue Nord', prix: 7000, distance: 10 },
+        { id: 'z27', zone: 'Ambohidratrimo', secteur: 'Banlieue Nord', prix: 8000, distance: 14 },
+        { id: 'z28', zone: 'Talatamaty', secteur: 'Banlieue Nord', prix: 7000, distance: 12 },
+        // Sud
+        { id: 'z29', zone: 'Anosizato', secteur: 'CUA Sud', prix: 5000, distance: 7 },
+        { id: 'z30', zone: 'Andoharanofotsy', secteur: 'CUA Sud', prix: 5500, distance: 8 },
+        { id: 'z31', zone: 'Androhibe', secteur: 'CUA Sud-Est', prix: 5000, distance: 7 },
+        { id: 'z32', zone: 'Ankadindramamy', secteur: 'CUA Sud', prix: 5000, distance: 6 },
+        { id: 'z33', zone: 'Soanierana', secteur: 'CUA Ouest', prix: 4500, distance: 5 },
+        { id: 'z34', zone: 'Andralanitra', secteur: 'CUA Est', prix: 5000, distance: 7 },
+        { id: 'z35', zone: 'Alasora', secteur: 'Banlieue Est', prix: 6500, distance: 10 },
+        { id: 'z36', zone: 'Itaosy', secteur: 'Banlieue Ouest', prix: 6000, distance: 9 },
+        { id: 'z37', zone: 'Tanjombato', secteur: 'Banlieue Sud', prix: 7000, distance: 12 },
+        { id: 'z38', zone: 'Ambohimangakely', secteur: 'Banlieue Est', prix: 8000, distance: 15 },
+        { id: 'z39', zone: 'Imerintsiatosika', secteur: 'Banlieue Ouest', prix: 10000, distance: 22 },
+        { id: 'z40', zone: 'Mahitsy', secteur: 'Banlieue Nord', prix: 12000, distance: 28 },
+    ];
+}
+
+/* ═══════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════ */
+function renderDashboard() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayLivs = allLivraisons.filter(l => l.date === today || l.created_at?.startsWith(today));
+    const pending = allLivraisons.filter(l => l.statut === 'pending');
+    const encours = allLivraisons.filter(l => l.statut === 'encours');
+    const livree = allLivraisons.filter(l => l.statut === 'livree' && (l.date === today || l.created_at?.startsWith(today)));
+
+    document.getElementById('statTotal').textContent = todayLivs.length;
+    document.getElementById('statPending').textContent = pending.length;
+    document.getElementById('statEncours').textContent = encours.length;
+    document.getElementById('statLivree').textContent = livree.length;
+
+    // Badge nav
+    const badge = document.getElementById('navBadgeEncours');
+    if (badge) {
+        badge.textContent = encours.length;
+        badge.style.display = encours.length > 0 ? '' : 'none';
+        if (encours.length > 0) badge.classList.add('red');
+    }
+
+    // Table: en cours + pending
+    const displayed = allLivraisons.filter(l => l.statut === 'encours' || l.statut === 'pending')
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const tbody = document.getElementById('dashboardTable');
+    if (displayed.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fas fa-check-double"></i><p>Tout est livré !</p><small>Aucune livraison en attente ou en cours.</small></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = displayed.map(l => `
+        <tr onclick="openDetail('${l.id}')">
+            <td><code style="font-size:12px;color:var(--accent)">${l.numero || l.id.slice(0,8)}</code></td>
+            <td>
+                <div style="font-weight:500">${esc(l.livreur_nom)}</div>
+            </td>
+            <td>
+                <div style="font-weight:500">${esc(l.client_nom)}</div>
+                <div class="td-dim">${esc(l.adresse)}</div>
+            </td>
+            <td>${esc(l.article)}</td>
+            <td class="td-dim">${l.heure || '—'}</td>
+            <td>${statusBadge(l.statut)}</td>
+            <td>
+                <div style="display:flex;gap:8px;" onclick="event.stopPropagation()">
+                    ${l.statut === 'pending' ? `<button class="btn btn-sm btn-secondary" onclick="changeStatut('${l.id}','encours')"><i class="fas fa-play"></i></button>` : ''}
+                    ${l.statut === 'encours' ? `<button class="btn btn-sm btn-secondary" onclick="changeStatut('${l.id}','livree')"><i class="fas fa-check"></i></button>` : ''}
+                    <button class="btn btn-sm btn-secondary" onclick="printTicket('${l.id}')"><i class="fas fa-print"></i></button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   HISTORIQUE
+═══════════════════════════════════════════════════════ */
+function renderHistorique() {
+    // Populate livreur filter
+    const livreurSel = document.getElementById('histLivreur');
+    const livreurs = [...new Set(allLivraisons.map(l => l.livreur_nom).filter(Boolean))].sort();
+    livreurSel.innerHTML = '<option value="">Tous les livreurs</option>' + livreurs.map(l => `<option value="${l}">${l}</option>`).join('');
+
+    filterHistorique();
+}
+
+function filterHistorique() {
+    const q = document.getElementById('histSearch').value.toLowerCase();
+    const statut = document.getElementById('histStatut').value;
+    const livreur = document.getElementById('histLivreur').value;
+
+    let filtered = allLivraisons;
+    if (statut) filtered = filtered.filter(l => l.statut === statut);
+    if (livreur) filtered = filtered.filter(l => l.livreur_nom === livreur);
+    if (q) filtered = filtered.filter(l =>
+        (l.livreur_nom || '').toLowerCase().includes(q) ||
+        (l.client_nom || '').toLowerCase().includes(q) ||
+        (l.article || '').toLowerCase().includes(q) ||
+        (l.adresse || '').toLowerCase().includes(q) ||
+        (l.numero || '').toLowerCase().includes(q)
+    );
+
+    filtered = filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const tbody = document.getElementById('histTable');
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fas fa-search"></i><p>Aucun résultat</p><small>Modifiez vos critères de recherche</small></div></td></tr>`;
+        return;
+    }
+
+    const isAdmin = currentUser.role === 'admin';
+
+    tbody.innerHTML = filtered.map(l => `
+        <tr onclick="openDetail('${l.id}')">
+            <td><code style="font-size:12px;color:var(--accent)">${l.numero || l.id.slice(0,8)}</code></td>
+            <td class="td-dim">${l.date || formatDate(l.created_at)}</td>
+            <td>${esc(l.livreur_nom)}</td>
+            <td>
+                <div style="font-weight:500">${esc(l.client_nom)}</div>
+                ${l.tel_client ? `<div class="td-dim">${esc(l.tel_client)}</div>` : ''}
+            </td>
+            <td>${esc(l.article)}</td>
+            <td class="td-dim">${esc(l.zone) || '—'}</td>
+            <td style="font-family:'Syne',sans-serif;color:var(--accent);font-weight:700;">${formatAr(l.prix)}</td>
+            <td>${statusBadge(l.statut)}</td>
+            <td>
+                <div style="display:flex;gap:6px;" onclick="event.stopPropagation()">
+                    <button class="btn btn-sm btn-secondary" onclick="printTicket('${l.id}')"><i class="fas fa-print"></i></button>
+                    ${isAdmin ? `<button class="btn btn-sm btn-danger" onclick="deleteLivraison('${l.id}')"><i class="fas fa-trash"></i></button>` : ''}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   NOUVELLE LIVRAISON
+═══════════════════════════════════════════════════════ */
+function initNouvellePage() {
+    // Set today date
+    document.getElementById('newDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('newHeure').value = new Date().toTimeString().slice(0,5);
+    document.getElementById('newPrix').value = '';
+    document.getElementById('newArticle').value = '';
+    document.getElementById('newClient').value = '';
+    document.getElementById('newAdresse').value = '';
+    document.getElementById('newTel').value = '';
+    document.getElementById('newRemarque').value = '';
+
+    // Livreurs
+    const livreurSel = document.getElementById('newLivreur');
+    const livreurs = allUsers.filter(u => u.role === 'livreur');
+    livreurSel.innerHTML = '<option value="">Sélectionner un livreur…</option>' +
+        livreurs.map(u => `<option value="${u.id}|${u.nom}">${u.nom}</option>`).join('');
+
+    // Zones
+    const zoneSel = document.getElementById('newZone');
+    zoneSel.innerHTML = '<option value="">Sélectionner la zone…</option>' +
+        [...allPrix].sort((a,b) => a.zone.localeCompare(b.zone))
+            .map(p => `<option value="${p.id}|${p.zone}|${p.prix}">${p.zone} — ${formatAr(p.prix)}</option>`).join('');
+}
+
+function updatePrix() {
+    const sel = document.getElementById('newZone').value;
+    if (!sel) { document.getElementById('newPrix').value = ''; return; }
+    const parts = sel.split('|');
+    document.getElementById('newPrix').value = parts[2] || '';
+}
+
+async function createLivraison() {
+    const livreurVal = document.getElementById('newLivreur').value;
+    const zoneVal = document.getElementById('newZone').value;
+    const adresse = document.getElementById('newAdresse').value.trim();
+    const client = document.getElementById('newClient').value.trim();
+    const article = document.getElementById('newArticle').value.trim();
+    const date = document.getElementById('newDate').value;
+    const heure = document.getElementById('newHeure').value;
+    const prix = document.getElementById('newPrix').value;
+    const statut = document.getElementById('newStatut').value;
+    const remarque = document.getElementById('newRemarque').value.trim();
+    const tel = document.getElementById('newTel').value.trim();
+
+    if (!livreurVal || !zoneVal || !adresse || !client || !article || !date) {
+        showToast('Veuillez remplir tous les champs obligatoires (*).', 'error');
+        return;
+    }
+
+    const [livreurId, livreurNom] = livreurVal.split('|');
+    const [zoneId, zoneName, zonePrix] = zoneVal.split('|');
+    const numero = 'LIV-' + String(allLivraisons.length + 1).padStart(3, '0');
+
+    const newLiv = {
+        id: 'liv-' + Date.now(),
+        numero,
+        livreur_id: livreurId,
+        livreur_nom: livreurNom,
+        client_nom: client,
+        tel_client: tel,
+        adresse,
+        article,
+        zone: zoneName,
+        zone_id: zoneId,
+        prix: parseInt(prix) || 0,
+        date,
+        heure,
+        statut,
+        remarque,
+        created_at: new Date().toISOString()
+    };
+
+    if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        try {
+            const res = await dbPost('livraisons', { ...newLiv, id: undefined });
+            if (Array.isArray(res) && res[0]) {
+                newLiv.id = res[0].id;
+                newLiv.numero = res[0].numero || numero;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    allLivraisons.unshift(newLiv);
+    showToast(`Livraison ${numero} créée avec succès !`, 'success');
+    navigateTo('dashboard');
+}
+
+/* ═══════════════════════════════════════════════════════
+   DETAIL / ACTIONS
+═══════════════════════════════════════════════════════ */
+function openDetail(id) {
+    const l = allLivraisons.find(x => x.id === id);
+    if (!l) return;
+
+    const isAdmin = currentUser.role === 'admin';
+
+    document.getElementById('modalDetailTitle').textContent = `Livraison ${l.numero || l.id.slice(0,8)}`;
+
+    document.getElementById('modalDetailContent').innerHTML = `
+        <div class="detail-grid">
+            <div class="detail-tile">
+                <div class="tile-label">Numéro</div>
+                <div class="tile-val accent">${esc(l.numero || l.id.slice(0,8))}</div>
+            </div>
+            <div class="detail-tile">
+                <div class="tile-label">Statut</div>
+                <div class="tile-val">${statusBadge(l.statut)}</div>
+            </div>
+            <div class="detail-tile">
+                <div class="tile-label">Livreur</div>
+                <div class="tile-val" style="font-size:14px;">${esc(l.livreur_nom)}</div>
+            </div>
+            <div class="detail-tile">
+                <div class="tile-label">Date / Heure</div>
+                <div class="tile-val" style="font-size:14px;">${l.date || '—'} ${l.heure ? 'à ' + l.heure : ''}</div>
+            </div>
+            <div class="detail-tile">
+                <div class="tile-label">Client</div>
+                <div class="tile-val" style="font-size:14px;">${esc(l.client_nom)}</div>
+            </div>
+            <div class="detail-tile">
+                <div class="tile-label">Téléphone</div>
+                <div class="tile-val" style="font-size:14px;">${esc(l.tel_client) || '—'}</div>
+            </div>
+        </div>
+        <div class="detail-tile" style="margin-bottom:10px;">
+            <div class="tile-label">Adresse de livraison</div>
+            <div class="tile-val" style="font-size:14px;font-weight:500;">${esc(l.adresse)}</div>
+        </div>
+        <div class="detail-tile" style="margin-bottom:10px;">
+            <div class="tile-label">Article(s)</div>
+            <div class="tile-val" style="font-size:14px;font-weight:500;">${esc(l.article)}</div>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-tile">
+                <div class="tile-label">Zone</div>
+                <div class="tile-val" style="font-size:14px;">${esc(l.zone) || '—'}</div>
+            </div>
+            <div class="detail-tile">
+                <div class="tile-label">Prix livraison</div>
+                <div class="tile-val accent">${formatAr(l.prix)}</div>
+            </div>
+        </div>
+        ${l.remarque ? `<div class="detail-tile" style="margin-top:10px;"><div class="tile-label">Remarque</div><div style="font-size:13px;color:var(--text-dim);margin-top:4px;">${esc(l.remarque)}</div></div>` : ''}
+    `;
+
+    const footer = document.getElementById('modalDetailFooter');
+    const canChangeStatut = isAdmin || l.livreur_id === currentUser.id;
+
+    footer.innerHTML = `
+        <button class="btn btn-secondary btn-sm" onclick="printTicket('${l.id}')"><i class="fas fa-print"></i> Ticket</button>
+        ${canChangeStatut && l.statut === 'pending' ? `<button class="btn btn-sm" style="background:rgba(64,144,240,0.15);border:1px solid rgba(64,144,240,0.3);color:var(--blue);" onclick="changeStatut('${l.id}','encours');closeModalById('modalDetail');"><i class="fas fa-play"></i> En cours</button>` : ''}
+        ${canChangeStatut && l.statut === 'encours' ? `<button class="btn btn-sm" style="background:rgba(48,208,144,0.15);border:1px solid rgba(48,208,144,0.3);color:var(--green);" onclick="changeStatut('${l.id}','livree');closeModalById('modalDetail');"><i class="fas fa-check"></i> Marquer livrée</button>` : ''}
+        ${isAdmin && l.statut === 'livree' ? `<button class="btn btn-sm btn-danger" onclick="changeStatut('${l.id}','encours');closeModalById('modalDetail');"><i class="fas fa-undo"></i> Annuler livraison</button>` : ''}
+    `;
+
+    openModalById('modalDetail');
+}
+
+async function changeStatut(id, newStatut) {
+    const idx = allLivraisons.findIndex(l => l.id === id);
+    if (idx === -1) return;
+
+    allLivraisons[idx].statut = newStatut;
+
+    if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        try { await dbPatch('livraisons', id, { statut: newStatut }); } catch {}
+    }
+
+    showToast(`Statut mis à jour : ${statusLabel(newStatut)}`, 'success');
+
+    // Re-render current page
+    const activePage = document.querySelector('.page.active')?.id;
+    if (activePage === 'page-dashboard') renderDashboard();
+    if (activePage === 'page-historique') filterHistorique();
+    if (activePage === 'page-mes-livraisons') renderMesLivraisons();
+}
+
+async function deleteLivraison(id) {
+    if (!confirm('Supprimer cette livraison ? Cette action est irréversible.')) return;
+    allLivraisons = allLivraisons.filter(l => l.id !== id);
+    if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        try { await dbDelete('livraisons', id); } catch {}
+    }
+    filterHistorique();
+    showToast('Livraison supprimée.', 'success');
+}
+
+/* ═══════════════════════════════════════════════════════
+   MES LIVRAISONS (livreur)
+═══════════════════════════════════════════════════════ */
+function renderMesLivraisons() {
+    const mes = allLivraisons.filter(l => l.livreur_id === currentUser.id || l.livreur_nom === currentUser.nom)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const tbody = document.getElementById('mesLivraisonsTable');
+    if (mes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fas fa-truck"></i><p>Aucune livraison assignée</p><small>Le coordinateur vous assignera des livraisons</small></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = mes.map(l => `
+        <tr onclick="openDetail('${l.id}')">
+            <td><code style="font-size:12px;color:var(--accent)">${l.numero || l.id.slice(0,8)}</code></td>
+            <td class="td-dim">${l.date || formatDate(l.created_at)}</td>
+            <td>
+                <div style="font-weight:500">${esc(l.client_nom)}</div>
+                ${l.tel_client ? `<div class="td-dim">${esc(l.tel_client)}</div>` : ''}
+            </td>
+            <td class="td-dim">${esc(l.adresse)}</td>
+            <td>${esc(l.article)}</td>
+            <td style="font-family:'Syne',sans-serif;color:var(--accent);font-weight:700;">${formatAr(l.prix)}</td>
+            <td>${statusBadge(l.statut)}</td>
+            <td onclick="event.stopPropagation()">
+                <div style="display:flex;gap:6px;">
+                    ${l.statut === 'pending' ? `<button class="btn btn-sm" style="background:rgba(64,144,240,0.15);border:1px solid rgba(64,144,240,0.2);color:var(--blue);" onclick="changeStatut('${l.id}','encours')"><i class="fas fa-play"></i></button>` : ''}
+                    ${l.statut === 'encours' ? `<button class="btn btn-sm" style="background:rgba(48,208,144,0.15);border:1px solid rgba(48,208,144,0.2);color:var(--green);" onclick="changeStatut('${l.id}','livree')"><i class="fas fa-check"></i></button>` : ''}
+                    <button class="btn btn-sm btn-secondary" onclick="printTicket('${l.id}')"><i class="fas fa-print"></i></button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   PRIX
+═══════════════════════════════════════════════════════ */
+function renderPrix() {
+    const isAdmin = currentUser.role === 'admin';
+    document.getElementById('btnAddPrix').style.display = isAdmin ? '' : 'none';
+    filterPrix();
+}
+
+function filterPrix() {
+    const q = document.getElementById('prixSearch').value.toLowerCase();
+    const filtered = allPrix.filter(p =>
+        (p.zone || '').toLowerCase().includes(q) ||
+        (p.secteur || '').toLowerCase().includes(q)
+    ).sort((a, b) => a.prix - b.prix);
+
+    const grid = document.getElementById('prixGrid');
+    const isAdmin = currentUser.role === 'admin';
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-search"></i><p>Aucune zone trouvée</p></div>`;
+        return;
+    }
+
+    grid.innerHTML = filtered.map(p => `
+        <div class="prix-card">
+            <div class="prix-card-icon"><i class="fas fa-map-marker-alt"></i></div>
+            <div class="prix-card-zone">
+                <div class="prix-card-name">${esc(p.zone)}</div>
+                <div class="prix-card-quartier">${esc(p.secteur) || ''}${p.distance ? ` · ~${p.distance} km` : ''}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+                <div class="prix-card-price">${formatAr(p.prix)}</div>
+                ${isAdmin ? `
+                    <div style="display:flex;gap:4px;">
+                        <button class="btn btn-sm btn-secondary" style="height:26px;padding:0 10px;font-size:11px;" onclick="editPrix('${p.id}')"><i class="fas fa-pen"></i></button>
+                        <button class="btn btn-sm btn-danger" style="height:26px;padding:0 10px;font-size:11px;" onclick="deletePrix('${p.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function openPrixModal(id = null) {
+    editPrixId = id;
+    if (id) {
+        const p = allPrix.find(x => x.id === id);
+        if (!p) return;
+        document.getElementById('modalPrixTitle').textContent = 'Modifier la zone';
+        document.getElementById('pZone').value = p.zone;
+        document.getElementById('pSecteur').value = p.secteur || '';
+        document.getElementById('pPrix').value = p.prix;
+        document.getElementById('pDistance').value = p.distance || '';
+    } else {
+        document.getElementById('modalPrixTitle').textContent = 'Nouvelle zone';
+        document.getElementById('pZone').value = '';
+        document.getElementById('pSecteur').value = '';
+        document.getElementById('pPrix').value = '';
+        document.getElementById('pDistance').value = '';
+    }
+    openModalById('modalPrix');
+}
+
+function editPrix(id) { openPrixModal(id); }
+
+async function savePrix() {
+    const zone = document.getElementById('pZone').value.trim();
+    const secteur = document.getElementById('pSecteur').value.trim();
+    const prix = parseInt(document.getElementById('pPrix').value);
+    const distance = parseFloat(document.getElementById('pDistance').value) || null;
+
+    if (!zone || !prix) { showToast('Zone et prix sont obligatoires.', 'error'); return; }
+
+    const data = { zone, secteur, prix, distance };
+
+    if (editPrixId) {
+        const idx = allPrix.findIndex(p => p.id === editPrixId);
+        if (idx !== -1) allPrix[idx] = { ...allPrix[idx], ...data };
+        if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+            try { await dbPatch('zones_prix', editPrixId, data); } catch {}
+        }
+        showToast('Zone mise à jour.', 'success');
+    } else {
+        const newP = { id: 'z-' + Date.now(), ...data };
+        allPrix.push(newP);
+        if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+            try { await dbPost('zones_prix', data); } catch {}
+        }
+        showToast('Zone ajoutée.', 'success');
+    }
+
+    closeModalById('modalPrix');
+    filterPrix();
+}
+
+async function deletePrix(id) {
+    if (!confirm('Supprimer cette zone ?')) return;
+    allPrix = allPrix.filter(p => p.id !== id);
+    if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        try { await dbDelete('zones_prix', id); } catch {}
+    }
+    filterPrix();
+    showToast('Zone supprimée.', 'success');
+}
+
+/* ═══════════════════════════════════════════════════════
+   CONFIGURATION
+═══════════════════════════════════════════════════════ */
+function renderConfig() {
+    document.getElementById('cfgNom').value = appConfig.nom || '';
+    document.getElementById('cfgSlogan').value = appConfig.slogan || '';
+    document.getElementById('cfgTel').value = appConfig.tel || '';
+    document.getElementById('cfgEmail').value = appConfig.email || '';
+    document.getElementById('cfgAdresse').value = appConfig.adresse || '';
+    document.getElementById('cfgFooter').value = appConfig.footer || '';
+    document.getElementById('cfgMention').value = appConfig.mention || 'BON DE LIVRAISON';
+    document.getElementById('cfgPolicy').value = appConfig.policy || '';
+    renderTicketPreview();
+}
+
+async function saveConfig() {
+    appConfig.nom = document.getElementById('cfgNom').value.trim();
+    appConfig.slogan = document.getElementById('cfgSlogan').value.trim();
+    appConfig.tel = document.getElementById('cfgTel').value.trim();
+    appConfig.email = document.getElementById('cfgEmail').value.trim();
+    appConfig.adresse = document.getElementById('cfgAdresse').value.trim();
+    appConfig.footer = document.getElementById('cfgFooter').value.trim();
+    appConfig.mention = document.getElementById('cfgMention').value.trim();
+    appConfig.policy = document.getElementById('cfgPolicy').value.trim();
+
+    if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        try {
+            if (appConfig.id) {
+                await dbPatch('config', appConfig.id, appConfig);
+            } else {
+                const res = await dbPost('config', appConfig);
+                if (Array.isArray(res) && res[0]) appConfig.id = res[0].id;
+            }
+        } catch {}
+    }
+
+    renderTicketPreview();
+    showToast('Configuration enregistrée.', 'success');
+}
+
+function renderTicketPreview(l = null) {
+    const cfg = appConfig;
+    const preview = l || {
+        numero: 'LIV-001', livreur_nom: 'Jean Rakoto', client_nom: 'Marie Rasoa',
+        adresse: 'Lot II D 45, Analamahitsy', article: 'Téléphone Samsung A54',
+        zone: 'Analamahitsy', prix: 5000, statut: 'encours',
+        date: new Date().toISOString().split('T')[0], heure: '10:30', remarque: 'Appeler avant livraison'
+    };
+    document.getElementById('ticketPreview').innerHTML = buildTicketHTML(preview, cfg);
+}
+
+function buildTicketHTML(l, cfg) {
+    const now = new Date();
+    const printDate = now.toLocaleDateString('fr-MG') + ' ' + now.toLocaleTimeString('fr-MG', { hour: '2-digit', minute: '2-digit' });
+    return `
+<div style="text-align:center;margin-bottom:6px;">
+    <div style="font-size:18px;font-weight:bold;letter-spacing:2px;">${esc(cfg.nom || 'LIVRAISON PRO')}</div>
+    ${cfg.slogan ? `<div style="font-size:9px;letter-spacing:1px;">${esc(cfg.slogan)}</div>` : ''}
+    ${cfg.adresse ? `<div style="font-size:9px;">${esc(cfg.adresse)}</div>` : ''}
+    ${cfg.tel ? `<div style="font-size:9px;">Tél : ${esc(cfg.tel)}</div>` : ''}
+</div>
+<hr style="border:none;border-top:1px dashed #000;margin:4px 0;">
+<div style="text-align:center;font-size:13px;font-weight:bold;letter-spacing:2px;margin:4px 0;">${esc(cfg.mention || 'BON DE LIVRAISON')}</div>
+<hr style="border:none;border-top:1px dashed #000;margin:4px 0;">
+<div style="display:flex;justify-content:space-between;margin:2px 0;font-size:10px;"><span style="color:#555;">N° Livraison</span><b>${esc(l.numero || l.id?.slice(0,8) || '—')}</b></div>
+<div style="display:flex;justify-content:space-between;margin:2px 0;font-size:10px;"><span style="color:#555;">Date</span><b>${l.date || '—'} ${l.heure ? l.heure : ''}</b></div>
+<div style="display:flex;justify-content:space-between;margin:2px 0;font-size:10px;"><span style="color:#555;">Imprimé le</span><b>${printDate}</b></div>
+<hr style="border:none;border-top:1px dashed #000;margin:4px 0;">
+<div style="font-size:9px;color:#555;margin-bottom:2px;">LIVREUR</div>
+<div style="font-size:11px;font-weight:bold;margin-bottom:4px;">${esc(l.livreur_nom)}</div>
+<div style="font-size:9px;color:#555;margin-bottom:2px;">CLIENT</div>
+<div style="font-size:11px;font-weight:bold;">${esc(l.client_nom)}</div>
+${l.tel_client ? `<div style="font-size:9px;">${esc(l.tel_client)}</div>` : ''}
+<hr style="border:none;border-top:1px dashed #000;margin:4px 0;">
+<div style="font-size:9px;color:#555;margin-bottom:2px;">ADRESSE DE LIVRAISON</div>
+<div style="font-size:11px;font-weight:bold;margin-bottom:2px;">${esc(l.adresse)}</div>
+<div style="font-size:9px;">Zone : ${esc(l.zone) || '—'}</div>
+<hr style="border:none;border-top:1px dashed #000;margin:4px 0;">
+<div style="font-size:9px;color:#555;margin-bottom:2px;">ARTICLE(S)</div>
+<div style="font-size:11px;font-weight:bold;">${esc(l.article)}</div>
+${l.remarque ? `<div style="font-size:9px;color:#555;margin-top:2px;">Note : ${esc(l.remarque)}</div>` : ''}
+<hr style="border:none;border-top:1px dashed #000;margin:4px 0;">
+<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:bold;margin:4px 0;"><span>PRIX LIVRAISON</span><span>${formatAr(l.prix)}</span></div>
+<div style="text-align:center;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin:6px 0;">${statusLabel(l.statut)}</div>
+<hr style="border:none;border-top:1px dashed #000;margin:4px 0;">
+<div style="text-align:center;font-size:9px;color:#555;margin-top:4px;white-space:pre-line;">${esc(cfg.footer || '')}</div>
+${cfg.policy ? `<div style="text-align:center;font-size:8px;color:#777;margin-top:2px;">${esc(cfg.policy)}</div>` : ''}
+<div style="text-align:center;font-size:9px;letter-spacing:3px;margin-top:6px;">${(l.numero || '').replace('-','')}</div>
+`;
+}
+
+function printTicket(id) {
+    const l = allLivraisons.find(x => x.id === id);
+    if (!l) return;
+    const cfg = appConfig;
+    const html = buildTicketHTML(l, cfg);
+    const printDiv = document.getElementById('ticketPrint');
+    printDiv.innerHTML = html;
+
+    // Print
+    const w = window.open('', '_blank', 'width=320,height=600');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+body{font-family:'Courier New',monospace;font-size:11px;color:#000;background:#fff;margin:0;padding:4mm;width:80mm;}
+</style></head><body>${html}</body></html>`);
+    w.document.close();
+    setTimeout(() => { w.print(); }, 300);
+}
+
+function printTicketPreview() {
+    const html = document.getElementById('ticketPreview').innerHTML;
+    const w = window.open('', '_blank', 'width=320,height=600');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>body{font-family:'Courier New',monospace;font-size:11px;color:#000;background:#fff;margin:0;padding:4mm;width:80mm;}</style></head><body>${html}</body></html>`);
+    w.document.close();
+    setTimeout(() => { w.print(); }, 300);
+}
+
+/* ═══════════════════════════════════════════════════════
+   USERS
+═══════════════════════════════════════════════════════ */
+function renderUsers() {
+    const list = document.getElementById('usersList');
+    if (allUsers.length === 0) {
+        list.innerHTML = `<div class="empty-state"><i class="fas fa-users"></i><p>Aucun utilisateur</p></div>`;
+        return;
+    }
+
+    list.innerHTML = allUsers.map(u => `
+        <div class="user-card">
+            <div class="user-card-avatar">${(u.nom || u.email).charAt(0).toUpperCase()}</div>
+            <div class="user-card-info">
+                <div class="user-card-name">${esc(u.nom)}</div>
+                <div class="user-card-meta">${esc(u.email)}</div>
+            </div>
+            <span class="role-badge ${u.role}">${u.role === 'admin' ? '<i class="fas fa-shield-alt"></i> Admin' : '<i class="fas fa-truck"></i> Livreur'}</span>
+            <div style="display:flex;gap:6px;margin-left:8px;">
+                <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openUserModal() {
+    document.getElementById('uNom').value = '';
+    document.getElementById('uEmail').value = '';
+    document.getElementById('uPassword').value = '';
+    document.getElementById('uRole').value = 'livreur';
+    document.getElementById('modalUserTitle').textContent = 'Nouvel utilisateur';
+    openModalById('modalUser');
+}
+
+async function saveUser() {
+    const nom = document.getElementById('uNom').value.trim();
+    const email = document.getElementById('uEmail').value.trim();
+    const password = document.getElementById('uPassword').value;
+    const role = document.getElementById('uRole').value;
+
+    if (!nom || !email || !password) { showToast('Tous les champs sont obligatoires.', 'error'); return; }
+    if (password.length < 6) { showToast('Mot de passe minimum 6 caractères.', 'error'); return; }
+
+    const newUser = { id: 'u-' + Date.now(), nom, email, role };
+
+    if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        try {
+            // Create auth user via Supabase Admin API (requires service role key in production)
+            await dbPost('profiles', { nom, email, role });
+        } catch {}
+    }
+
+    allUsers.push(newUser);
+    closeModalById('modalUser');
+    renderUsers();
+    showToast(`Utilisateur ${nom} créé.`, 'success');
+}
+
+async function deleteUser(id) {
+    if (!confirm('Supprimer cet utilisateur ?')) return;
+    allUsers = allUsers.filter(u => u.id !== id);
+    if (!SUPABASE_URL.includes('VOTRE_PROJECT')) {
+        try { await dbDelete('profiles', id); } catch {}
+    }
+    renderUsers();
+    showToast('Utilisateur supprimé.', 'success');
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════════ */
+function openModalById(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModalById(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function closeModal(id, e) {
+    if (e.target === document.getElementById(id)) closeModalById(id);
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open').forEach(m => {
+            m.classList.remove('open');
+        });
+        document.body.style.overflow = '';
+    }
+});
+
+/* ═══════════════════════════════════════════════════════
+   SIDEBAR (mobile)
+═══════════════════════════════════════════════════════ */
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg, type = 'default') {
+    const toast = document.getElementById('globalToast');
+    const icon = document.getElementById('toastIcon');
+    document.getElementById('toastMsg').textContent = msg;
+
+    toast.className = 'toast';
+    if (type === 'success') { toast.classList.add('success'); icon.className = 'fas fa-check-circle'; }
+    else if (type === 'error') { toast.classList.add('error'); icon.className = 'fas fa-exclamation-circle'; }
+    else { icon.className = 'fas fa-info-circle'; }
+
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════ */
+function esc(str) {
+    if (!str) return '';
+    const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+}
+
+function formatAr(n) {
+    if (!n && n !== 0) return '—';
+    return new Intl.NumberFormat('fr-MG').format(Math.round(n)) + ' Ar';
+}
+
+function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('fr-MG');
+}
+
+function statusBadge(statut) {
+    const map = {
+        'pending': '<span class="badge pending"><span class="badge-dot"></span>En attente</span>',
+        'encours': '<span class="badge encours"><span class="badge-dot"></span>En cours</span>',
+        'livree': '<span class="badge livree"><span class="badge-dot"></span>Livrée</span>',
+    };
+    return map[statut] || statut;
+}
+
+function statusLabel(statut) {
+    const map = { 'pending': 'En attente', 'encours': 'En cours', 'livree': 'Livrée ✓' };
+    return map[statut] || statut;
+}
+
+/* ═══════════════════════════════════════════════════════
+   AUTO LOGIN (session persist)
+═══════════════════════════════════════════════════════ */
+(function() {
+    const savedSession = localStorage.getItem('sb_session');
+    const savedUser = localStorage.getItem('sb_user');
+    if (savedSession && savedUser) {
+        try {
+            currentSession = JSON.parse(savedSession);
+            currentUser = JSON.parse(savedUser);
+            bootApp();
+        } catch {
+            localStorage.removeItem('sb_session');
+            localStorage.removeItem('sb_user');
+        }
+    }
+})();
+
+// Allow Enter key to submit login
+document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>
