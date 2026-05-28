@@ -198,6 +198,20 @@ input[type=date].filter-select{color-scheme:dark;padding:0 12px}
     <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="loginEmail" placeholder="votre@email.com" autocomplete="email"></div>
     <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" class="form-input" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="btn btn-primary" id="btnLogin" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Se connecter</button>
+    <div id="loginHelp" style="margin-top:16px;font-size:12px;color:var(--text-faint);text-align:center;display:none">Mode démo&nbsp;: <b>admin@demo.mg</b> / <b>admin123</b></div>
+    <details style="margin-top:16px;cursor:pointer">
+      <summary style="font-size:11px;color:var(--text-faint);text-align:center;list-style:none;outline:none">⚙️ Problème de connexion ? Voir les étapes de diagnostic</summary>
+      <div style="margin-top:10px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-dim);line-height:1.7">
+        <b style="color:var(--accent)">Checklist Supabase :</b><br>
+        1. Authentication → Users → votre user est bien là ?<br>
+        2. Cliquez les 3 points "···" → <b>Send confirmation email</b> ou cochez <b>"Confirm email"</b><br>
+        3. Table Editor → profiles → votre email est bien dans la table ?<br>
+        4. Si non : SQL Editor → <code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px">INSERT INTO profiles (user_id, nom, email, role) VALUES ('UUID', 'Nom', 'email@...', 'admin') ON CONFLICT (email) DO UPDATE SET role='admin';</code><br>
+        5. Settings → API → vérifiez que SUPABASE_URL et SUPABASE_KEY sont corrects dans index.html
+      </div>
+    </details>
+    <div id="loginDebug" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:10px;color:var(--text-faint);word-break:break-all;line-height:1.5;font-family:monospace"></div>
+
   </div>
 </div>
 
@@ -480,23 +494,67 @@ async function sbSignIn(email,pw){
   return r.json();
 }
 async function sbSignOut(){try{await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:getH()});}catch{}}
+
+/* ── Token refresh automatique ── */
+async function refreshToken(){
+  const s=currentSession;
+  if(!s?.refresh_token) return false;
+  try{
+    const r=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
+      body:JSON.stringify({refresh_token:s.refresh_token})
+    });
+    if(!r.ok) return false;
+    const data=await r.json();
+    if(!data.access_token) return false;
+    currentSession=data;
+    if(currentUser) saveSession(data,currentUser);
+    console.log('Token refreshed OK');
+    return true;
+  }catch(e){console.warn('Refresh failed:',e);return false;}
+}
+
+/* ── Handle 401 : essaie refresh puis force logout ── */
+async function handle401(){
+  console.warn('401 detected — trying token refresh...');
+  const ok = await refreshToken();
+  if(!ok){
+    console.warn('Refresh failed — forcing logout');
+    showToast('Session expirée. Veuillez vous reconnecter.','error');
+    setTimeout(()=>doLogout(),1500);
+  }
+  return ok;
+}
+
 async function dbGet(t,p=''){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${t}?${p}`,{headers:getH()});
+  if(r.status===401){
+    const refreshed=await handle401();
+    if(refreshed){
+      const r2=await fetch(`${SUPABASE_URL}/rest/v1/${t}?${p}`,{headers:getH()});
+      if(r2.ok) return r2.json();
+    }
+    return [];
+  }
   if(!r.ok){console.warn('dbGet',t,r.status);return[];}
   return r.json();
 }
 async function dbPost(t,d,admin=false){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${t}`,{method:'POST',headers:{...getH(admin),'Prefer':'return=representation'},body:JSON.stringify(d)});
+  if(r.status===401){await handle401();return null;}
   if(!r.ok){console.warn('dbPost',t,r.status);return null;}
   return r.json();
 }
 async function dbPatch(t,id,d){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...getH(),'Prefer':'return=representation'},body:JSON.stringify(d)});
+  if(r.status===401){await handle401();return null;}
   if(!r.ok){console.warn('dbPatch',t,r.status);return null;}
   return r.json();
 }
 async function dbDelete(t,id){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:getH()});
+  if(r.status===401){await handle401();}
   return r.ok;
 }
 
@@ -511,37 +569,85 @@ async function doLogin(){
   hideLoginErr();
   if(isDemo()){demoLogin(email,pw,btn);return;}
   try{
-    const res=await sbSignIn(email,pw);
-    if(!res.access_token){
-      let m='Email ou mot de passe incorrect.';
-      const e=res.error?.msg||res.error?.message||'';
-      if(e.includes('Email not confirmed'))m='Email non confirmé — vérifiez votre boîte mail.';
-      else if(e)m=e;
-      showLoginErr(m);resetBtn(btn);return;
+    // ── Étape 1 : Auth Supabase ──
+    const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
+      body:JSON.stringify({email,password:pw})
+    });
+    const res = await authResp.json();
+
+    // Debug: afficher la réponse brute en cas d'erreur
+    if(!authResp.ok || !res.access_token){
+      const code = res.error_code || res.error || '';
+      const msg  = res.error_description || res.msg || res.message || JSON.stringify(res);
+      console.error('Auth failed:', authResp.status, res);
+
+      let m = 'Identifiants incorrects.';
+      if(authResp.status===400){
+        if(msg.toLowerCase().includes('invalid login'))    m='Email ou mot de passe incorrect.';
+        else if(msg.toLowerCase().includes('not confirmed')) m='Email non confirmé. Allez dans Supabase → Authentication → Users → confirmez l'email.';
+        else if(msg.toLowerCase().includes('disabled'))    m='Compte désactivé. Contactez l'administrateur.';
+        else m=`Erreur auth (${authResp.status}): ${msg}`;
+      } else if(authResp.status===422){
+        m='Format email invalide.';
+      } else {
+        m=`Erreur ${authResp.status}: ${msg}`;
+      }
+      showLoginErr(m);
+      // Afficher aussi le détail technique pour faciliter le debug
+      document.getElementById('loginDebug').textContent='Debug: '+JSON.stringify({status:authResp.status,error:res.error,msg:res.error_description||res.msg||res.message});
+      document.getElementById('loginDebug').style.display='block';
+      resetBtn(btn);return;
     }
-    // SET SESSION FIRST avant tout appel DB
+
+    document.getElementById('loginDebug').style.display='none';
+
+    // ── Étape 2 : SET SESSION avant tout appel DB ──
     currentSession=res;
+
+    // ── Étape 3 : Récupérer le profil ──
     let profile=null;
+
+    // Essai 1 : par email
     try{
       const rows=await dbGet('profiles',`email=eq.${encodeURIComponent(email)}&select=*`);
-      if(Array.isArray(rows)&&rows.length)profile=rows[0];
-    }catch{}
-    if(!profile&&res.user?.id){
+      if(Array.isArray(rows)&&rows.length) profile=rows[0];
+    }catch(e){console.warn('Profile by email failed:',e);}
+
+    // Essai 2 : par user_id
+    if(!profile && res.user?.id){
       try{
         const rows=await dbGet('profiles',`user_id=eq.${res.user.id}&select=*`);
-        if(Array.isArray(rows)&&rows.length)profile=rows[0];
-      }catch{}
+        if(Array.isArray(rows)&&rows.length) profile=rows[0];
+      }catch(e){console.warn('Profile by user_id failed:',e);}
     }
+
+    // Essai 3 : anon key (contourne RLS temporairement pour le diagnostic)
     if(!profile){
-      showLoginErr('Profil introuvable. Insérez votre profil dans la table "profiles" (voir README).');
+      try{
+        const r2=await fetch(`${SUPABASE_URL}/rest/v1/profiles?email=eq.${encodeURIComponent(email)}&select=*`,{
+          headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+        });
+        const rows2=await r2.json();
+        if(Array.isArray(rows2)&&rows2.length) profile=rows2[0];
+      }catch(e){console.warn('Profile anon fallback failed:',e);}
+    }
+
+    if(!profile){
+      showLoginErr('Connexion Auth réussie mais profil introuvable dans la table "profiles". Exécutez le SQL de création de profil (voir README section 10).');
+      document.getElementById('loginDebug').textContent='Auth OK — user.id='+res.user?.id+' — Pas de profil dans profiles pour email='+email;
+      document.getElementById('loginDebug').style.display='block';
       currentSession=null;resetBtn(btn);return;
     }
+
     currentUser={...res.user,...profile};
     saveSession(res,currentUser);
     bootApp();
+
   }catch(e){
-    console.error(e);
-    showLoginErr('Erreur réseau. Vérifiez votre connexion.');
+    console.error('Login network error:',e);
+    showLoginErr('Erreur réseau: '+e.message);
     resetBtn(btn);
   }
 }
@@ -1231,13 +1337,44 @@ function sBadge(s){return{'pending':'<span class="badge pending"><span class="ba
 function sLabel(s){return{'pending':'En attente','encours':'En cours','livree':'Livrée ✓'}[s]||s;}
 
 /* ═══ AUTO-RESTORE SESSION ═══ */
-(function(){
-  if(isDemo())document.getElementById('loginHelp').style.display='block';
+(async function(){
+  if(isDemo()){document.getElementById('loginHelp').style.display='block';return;}
   try{
     const s=JSON.parse(localStorage.getItem('sb_session')||'null');
     const u=JSON.parse(localStorage.getItem('sb_user')||'null');
-    if(s&&u&&s.access_token){currentSession=s;currentUser=u;bootApp();return;}
-  }catch{}
+    if(!s||!u||!s.access_token) return;
+
+    currentSession=s; currentUser=u;
+
+    // Vérifier si le token est encore valide via un appel léger
+    const testR=await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${u.id||'x'}&select=id&limit=1`,{
+      headers:getH()
+    });
+
+    if(testR.status===401){
+      // Token expiré — essayer refresh_token
+      console.log('Token expired on restore — trying refresh...');
+      const refreshed=await refreshToken();
+      if(!refreshed){
+        console.log('Refresh failed — clearing session');
+        localStorage.removeItem('sb_session');
+        localStorage.removeItem('sb_user');
+        currentSession=null; currentUser=null;
+        return; // reste sur login page
+      }
+    }
+
+    // Session OK ou refreshée — démarrer l'app
+    bootApp();
+  }catch(e){
+    console.warn('Session restore error:',e);
+    // En cas d'erreur réseau, on essaie quand même de booter avec la session sauvegardée
+    try{
+      const s=JSON.parse(localStorage.getItem('sb_session')||'null');
+      const u=JSON.parse(localStorage.getItem('sb_user')||'null');
+      if(s&&u&&s.access_token){currentSession=s;currentUser=u;bootApp();}
+    }catch{}
+  }
 })();
 
 
